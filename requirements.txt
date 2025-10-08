@@ -7,3 +7,5 @@ pymupdf
 python-dotenv
 requests
 aiofiles
+edge-tts
+pydub
