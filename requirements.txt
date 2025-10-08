@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+streamlit
+crewai
+pymupdf
+python-dotenv
+requests
+aiofiles

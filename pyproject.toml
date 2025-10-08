@@ -1,0 +1,17 @@
+[project]
+name = "RapidRead-PDF-to-Podcast"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiofiles>=24.1.0",
+    "crewai>=0.201.1",
+    "fastapi>=0.118.1",
+    "pymupdf>=1.26.4",
+    "python-dotenv>=1.1.1",
+    "python-multipart>=0.0.20",
+    "requests>=2.32.5",
+    "streamlit>=1.50.0",
+    "uvicorn>=0.37.0",
+]
