@@ -110,13 +110,13 @@ async def process_pdf(file_id: str):
 @router.post("/generate-audio/{script_filename}", response_model=AudioGenerationResponse)
 async def generate_audio(script_filename: str):
     """
-    Generate audio podcast from script file
+    Generate single combined audio podcast from script file
     
     Args:
         script_filename: Name of the script file
         
     Returns:
-        AudioGenerationResponse with audio file paths
+        AudioGenerationResponse with combined audio file path
     """
     try:
         # Check if script exists
@@ -128,16 +128,19 @@ async def generate_audio(script_filename: str):
                 detail="Script file not found"
             )
         
-        # Generate audio
-        audio_files, playlist_file, total_segments = await tts_service.generate_complete_podcast(
+        # Generate combined audio
+        audio_file, total_segments = await tts_service.generate_complete_podcast(
             script_path
         )
+        
+        # Get audio duration
+        duration = tts_service.get_audio_duration(Path(audio_file))
         
         return AudioGenerationResponse(
             status="success",
             message="Audio generated successfully",
-            audio_files=audio_files,
-            playlist_file=playlist_file,
+            audio_file=audio_file,
+            duration=duration,
             total_segments=total_segments
         )
         
@@ -149,13 +152,13 @@ async def generate_audio(script_filename: str):
 @router.post("/process-complete/{file_id}", response_model=PodcastResponse)
 async def process_complete(file_id: str):
     """
-    Complete workflow: Process PDF and generate audio in one step
+    Complete workflow: Process PDF and generate single combined audio file
     
     Args:
         file_id: Unique identifier of the uploaded file
         
     Returns:
-        PodcastResponse with script and audio information
+        PodcastResponse with script and combined audio information
     """
     try:
         # Check if file exists
@@ -170,10 +173,13 @@ async def process_complete(file_id: str):
         # Step 1: Process PDF to script
         script_content, script_path = crew_service.process_pdf_to_script(file_path)
         
-        # Step 2: Generate audio from script
-        audio_files, playlist_file, total_segments = await tts_service.generate_complete_podcast(
+        # Step 2: Generate combined audio from script
+        audio_file, total_segments = await tts_service.generate_complete_podcast(
             script_path
         )
+        
+        # Get audio duration
+        duration = tts_service.get_audio_duration(Path(audio_file))
         
         # Clean up uploaded file
         file_path.unlink()
@@ -181,8 +187,8 @@ async def process_complete(file_id: str):
         return PodcastResponse(
             status="success",
             script_filename=script_path.name,
-            audio_files=audio_files,
-            playlist_file=playlist_file,
+            audio_file=audio_file,
+            duration=duration,
             total_segments=total_segments,
             message="Podcast generated successfully"
         )
@@ -226,20 +232,21 @@ async def download_script(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/download-audio/{script_name}/{audio_filename}")
-async def download_audio(script_name: str, audio_filename: str):
+@router.get("/download-audio/{script_name}")
+async def download_audio(script_name: str):
     """
-    Download a specific audio segment
+    Download the complete combined audio file
     
     Args:
-        script_name: Name of the script (folder)
-        audio_filename: Name of the audio file
+        script_name: Name of the script (without .txt extension)
         
     Returns:
-        FileResponse with the audio file
+        FileResponse with the combined audio file
     """
     try:
-        audio_path = settings.AUDIO_DIR / script_name / audio_filename
+        # Remove .txt if present
+        script_base = script_name.replace('.txt', '')
+        audio_path = settings.AUDIO_DIR / script_base / "podcast_complete.mp3"
         
         if not audio_path.exists():
             raise HTTPException(
@@ -249,7 +256,7 @@ async def download_audio(script_name: str, audio_filename: str):
         
         return FileResponse(
             path=audio_path,
-            filename=audio_filename,
+            filename=f"{script_base}_podcast.mp3",
             media_type='audio/mpeg'
         )
         
@@ -275,35 +282,39 @@ async def list_scripts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/audio-segments/{script_name}")
-async def list_audio_segments(script_name: str):
+@router.get("/audio-info/{script_name}")
+async def get_audio_info(script_name: str):
     """
-    List all audio segments for a specific script
+    Get information about the combined audio file
     
     Args:
         script_name: Name of the script
         
     Returns:
-        List of audio segment filenames
+        Audio file information including duration
     """
     try:
-        audio_folder = settings.AUDIO_DIR / script_name
+        audio_folder = settings.AUDIO_DIR / script_name.replace('.txt', '')
+        audio_file = audio_folder / "podcast_complete.mp3"
         
-        if not audio_folder.exists():
+        if not audio_file.exists():
             return {
                 "status": "success",
-                "audio_files": [],
-                "message": "No audio files found for this script"
+                "audio_exists": False,
+                "message": "No audio file found for this script"
             }
         
-        audio_files = [f.name for f in audio_folder.glob("segment_*.mp3")]
-        playlist = audio_folder / "playlist.m3u"
+        # Get audio duration
+        duration = tts_service.get_audio_duration(audio_file)
+        file_size = audio_file.stat().st_size
         
         return {
             "status": "success",
-            "audio_files": sorted(audio_files),
-            "playlist_exists": playlist.exists(),
-            "total_segments": len(audio_files)
+            "audio_exists": True,
+            "audio_file": str(audio_file),
+            "duration": duration,
+            "file_size": file_size,
+            "duration_formatted": f"{int(duration // 60)}:{int(duration % 60):02d}"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

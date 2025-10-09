@@ -9,3 +9,4 @@ requests
 aiofiles
 edge-tts
 pydub
+ffmpeg-python

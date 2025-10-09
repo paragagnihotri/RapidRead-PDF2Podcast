@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 
 class ProcessingStatus(BaseModel):
     """Response model for processing status"""
@@ -18,16 +18,16 @@ class AudioGenerationResponse(BaseModel):
     """Response model for audio generation"""
     status: str
     message: str
-    audio_files: List[str]
-    playlist_file: Optional[str] = None
+    audio_file: str
+    duration: Optional[float] = None
     total_segments: int
 
 class PodcastResponse(BaseModel):
     """Response model for complete podcast generation"""
     status: str
     script_filename: str
-    audio_files: List[str]
-    playlist_file: str
+    audio_file: str
+    duration: Optional[float] = None
     total_segments: int
     message: str
 

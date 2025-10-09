@@ -8,6 +8,7 @@ Transform your PDF documents into engaging, natural podcast-style conversation s
 - **Content Analysis**: Intelligent topic identification and structuring
 - **Natural Dialogue Generation**: Create authentic conversations between two speakers (Adam & Eve)
 - **Audio Generation**: Convert scripts to natural-sounding speech using Edge TTS
+- **Single MP3 Output**: Complete podcast in one convenient audio file
 - **Audio Playback**: Listen to your podcast directly in the browser
 - **Dual Mode**: Generate script only or complete podcast with audio
 - **RESTful API**: FastAPI backend with comprehensive endpoints
@@ -54,6 +55,7 @@ Transform your PDF documents into engaging, natural podcast-style conversation s
 
 - Python 3.10 or higher
 - Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **FFmpeg** (required for audio processing) - See [FFMPEG_INSTALLATION.md](FFMPEG_INSTALLATION.md)
 
 ### Setup Steps
 
@@ -137,11 +139,11 @@ The UI will open automatically in your browser at `http://localhost:8501`
 
 #### Complete Podcast (Script + Audio)
 ```
-Upload PDF → Generate Script → Generate Audio → Listen
+Upload PDF → Generate Script → Generate Audio → Combine into Single MP3 → Listen
 ```
 - Best for immediate listening
 - Takes 3-5 minutes
-- Produces script + MP3 segments
+- Produces script + **one complete MP3 file**
 
 #### Script Only (Faster)
 ```
@@ -180,23 +182,26 @@ curl -X POST "http://localhost:8000/api/process/{file_id}" \
 ```bash
 curl -X POST "http://localhost:8000/api/generate-audio/{script_filename}" \
   -H "accept: application/json"
+# Returns: {"audio_file": "path/to/podcast_complete.mp3", "duration": 180.5, "total_segments": 45}
 ```
 
 **4. Complete Workflow (Script + Audio):**
 ```bash
 curl -X POST "http://localhost:8000/api/process-complete/{file_id}" \
   -H "accept: application/json"
+# Returns: Complete podcast information including audio file path
 ```
 
-**5. Download Audio Segment:**
+**5. Download Complete Audio:**
 ```bash
-curl -X GET "http://localhost:8000/api/download-audio/{script_name}/{audio_filename}" \
-  --output segment.mp3
+curl -X GET "http://localhost:8000/api/download-audio/{script_name}" \
+  --output podcast.mp3
 ```
 
-**6. List Audio Segments:**
+**6. Get Audio Information:**
 ```bash
-curl -X GET "http://localhost:8000/api/audio-segments/{script_name}"
+curl -X GET "http://localhost:8000/api/audio-info/{script_name}"
+# Returns: Duration, file size, and audio status
 ```
 
 **7. Download Script:**
@@ -294,9 +299,9 @@ TTS_PITCH = "+1Hz"  # Pitch variation
 | POST | `/api/generate-audio/{script_filename}` | Generate audio from script |
 | POST | `/api/process-complete/{file_id}` | Generate script + audio |
 | GET | `/api/download/{filename}` | Download script |
-| GET | `/api/download-audio/{script}/{audio}` | Download audio segment |
+| GET | `/api/download-audio/{script_name}` | Download complete audio file |
+| GET | `/api/audio-info/{script_name}` | Get audio information |
 | GET | `/api/scripts` | List all scripts |
-| GET | `/api/audio-segments/{script_name}` | List audio segments |
 
 ## 📝 Example Output
 
@@ -313,9 +318,10 @@ The generated podcasts feature:
 - High-quality neural TTS voices
 - Natural prosody and intonation
 - Engaging conversational pace
-- Individual MP3 segments for each dialogue turn
-- M3U playlist for sequential playback
-- Typical output: 20-50 segments depending on content
+- **Single combined MP3 file** for seamless listening
+- Typical duration: 5-30 minutes depending on content
+- 192kbps bitrate for excellent quality
+- Small pauses between speakers for natural flow
 
 ### File Structure
 ```
@@ -324,11 +330,7 @@ outputs/
 
 audio_outputs/
 └── podcast_script_20231215_143022/
-    ├── segment_001_Adam.mp3
-    ├── segment_002_Eve.mp3
-    ├── segment_003_Adam.mp3
-    ├── ...
-    └── playlist.m3u
+    └── podcast_complete.mp3  (Single file!)
 ```
 
 ## 🛠️ Troubleshooting
@@ -350,15 +352,24 @@ audio_outputs/
 
 **Audio generation fails:**
 - Check internet connection (Edge TTS requires online access)
+- **Verify FFmpeg is installed**: `ffmpeg -version`
+- Check FFmpeg is in PATH
 - Verify script file exists in outputs directory
 - Check audio_outputs directory permissions
 - Try regenerating with smaller PDF first
 
 **Audio not playing:**
 - Check browser compatibility (Chrome/Edge recommended)
-- Verify audio files were generated in audio_outputs folder
+- Verify audio file was generated in audio_outputs folder
 - Check browser console for errors
 - Try downloading audio file directly
+- Ensure FFmpeg is properly installed
+
+**FFmpeg errors:**
+- See [FFMPEG_INSTALLATION.md](FFMPEG_INSTALLATION.md) for installation
+- Restart terminal/IDE after installing FFmpeg
+- Check FFmpeg is in system PATH
+- Try manual FFmpeg path configuration in code
 
 ## 🤝 Contributing
 
