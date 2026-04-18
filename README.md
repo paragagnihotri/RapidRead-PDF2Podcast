@@ -55,14 +55,14 @@ Transform your PDF documents into engaging, natural podcast-style conversation s
 
 - Python 3.10 or higher
 - Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-- **FFmpeg** (required for audio processing) - See [FFMPEG_INSTALLATION.md](FFMPEG_INSTALLATION.md)
+- **FFmpeg** (required for audio processing)
 
 ### Setup Steps
 
 1. **Clone the repository**
 ```bash
 git clone <your-repo-url>
-cd pdf-to-podcast
+cd RapidRead-PDF2Podcast
 ```
 
 2. **Create virtual environment**
