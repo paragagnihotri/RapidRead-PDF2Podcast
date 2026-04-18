@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-multipart
+streamlit
+crewai
+pymupdf
+python-dotenv
+requests
+aiofiles
+edge-tts
+pydub
+ffmpeg-python
