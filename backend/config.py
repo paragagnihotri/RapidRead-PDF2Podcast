@@ -22,7 +22,7 @@ class Settings:
     AUDIO_DIR: Path = BASE_DIR / "audio_outputs"
     
     # LLM settings
-    LLM_MODEL: str = "gemini/gemini-2.0-flash"
+    LLM_MODEL: str = "gemini/gemini-2.5-flash-lite"
     LLM_TEMPERATURE: float = 0.7
     
     # File upload settings
